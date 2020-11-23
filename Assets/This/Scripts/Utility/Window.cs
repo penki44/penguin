@@ -23,6 +23,9 @@ namespace penguin {
     private const uint SWP_NOACTIVE = 0x0010;
     private const uint SWP_SHOWWINDOW = 0x0040;
 
+    const int HWND_TOPMOST = -1;
+    const int HWND_NOTOPMOST = -2;
+
     private static Window o;
     private IntPtr windowHandle;
     #endif
@@ -32,14 +35,14 @@ namespace penguin {
       o = this;
       windowHandle = GetActiveWindow();
       SetWindowLong(windowHandle, GWL_STYLE, WS_POPUP);
-      Show();
+      Show(true);
       #endif
     }
 
-    public void Show() {
+    public static void Show(bool isTopMost) {
       #if !UNITY_EDITOR && UNITY_STANDALONE
       var flags = SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVE | SWP_SHOWWINDOW;
-      setWindowPos(flags);
+      setWindowPos(0, 0, 0, 0, isTopMost ? HWND_TOPMOST : HWND_NOTOPMOST, flags);
       #endif
     }
 
@@ -48,14 +51,14 @@ namespace penguin {
       POINT point;
       if (GetCursorPos(out point)) {
         var flags = SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVE;
-        setWindowPos(flags, (int)(point.x) - x, (int)(point.y) - y, Screen.width, Screen.height);
+        setWindowPos((int)(point.x) - x, (int)(point.y) - y, Screen.width, Screen.height, HWND_TOPMOST, flags);
       }
       #endif
     }
 
-    private static void setWindowPos(uint flags = 0x00, int x = 0, int y = 0, int w = 0, int h = 0) {
+    private static void setWindowPos(int x, int y, int w, int h, int z, uint flags) {
       #if !UNITY_EDITOR && UNITY_STANDALONE
-      SetWindowPos(o.windowHandle, new IntPtr(-1), x, y, w, h, flags);
+      SetWindowPos(o.windowHandle, new IntPtr(z), x, y, w, h, flags);
       #endif
     }
   }

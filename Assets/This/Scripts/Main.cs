@@ -138,6 +138,7 @@ namespace penguin {
     private void onFolder() {
       var browser = new FolderBrowserDialog();
       browser.RootFolder = Environment.SpecialFolder.UserProfile;
+      Window.Show(false);
       if (browser.ShowDialog() == System.Windows.Forms.DialogResult.OK) {
         var folderPath = File.UnifyDelimiter(browser.SelectedPath);
         config.folder = folderPath;
@@ -145,6 +146,7 @@ namespace penguin {
         textureList = texturePaths.ToList();
         saveConfig();
       }
+      Window.Show(true);
     }
 
     private void onTimePicker() {
