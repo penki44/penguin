@@ -24,13 +24,11 @@ namespace penguin {
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void OnBeforeFirstSceneLoad() {
-      #if !UNITY_EDITOR && UNITY_STANDALONE
       UnityEngine.Application.targetFrameRate = 60;
       UnityEngine.Screen.SetResolution(Resolution,
                                        Resolution,
                                        UnityEngine.Screen.fullScreen,
                                        UnityEngine.Application.targetFrameRate);
-      #endif
     }
 
     void Awake() {
