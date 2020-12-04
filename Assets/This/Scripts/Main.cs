@@ -51,6 +51,7 @@ namespace penguin {
 
         var settingItemConfigs = new MenuItem.Config[] {
           new MenuItem.Config("フォルダ", (MenuItem.Config config) => { onFolder(); }),
+          new MenuItem.Config("ロック/解除", (MenuItem.Config config) => { onLock(); }),
           new MenuItem.Config("時間/回数", (MenuItem.Config config) => { onTimePicker(); })
         };
 
