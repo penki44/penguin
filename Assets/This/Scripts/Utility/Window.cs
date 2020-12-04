@@ -5,18 +5,13 @@ using System.Runtime.InteropServices;
 namespace penguin {
   public class Window : MonoBehaviour {
     #if !UNITY_EDITOR && UNITY_STANDALONE
-    struct POINT {
-      public uint x;
-      public uint y;
-    }
-
     [DllImport("User32.dll")] private static extern IntPtr GetActiveWindow();
-    [DllImport("User32.dll")] private static extern bool GetCursorPos(out POINT lpPoint);
     [DllImport("User32.dll")] private static extern int SetWindowLong(IntPtr hWnd, int nIndex, uint dwNewLong);
     [DllImport("User32.dll")] private static extern int SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
 
     private const int GWL_STYLE = -16;
-    private const uint WS_POPUP = 0x80000000;
+    private const uint WS_OVERLAPPED_WINDOW = 0x00CF0000;
+    private const uint WS_POPUP_WINDOW = 0x80880000;
     private const uint SWP_NOSIZE = 0x0001;
     private const uint SWP_NOMOVE = 0x0002;
     private const uint SWP_NOZORDER = 0x0004;
@@ -28,31 +23,40 @@ namespace penguin {
 
     private static Window o;
     private IntPtr windowHandle;
+    private bool isPopUp;
     #endif
 
     public void Awake() {
       #if !UNITY_EDITOR && UNITY_STANDALONE
       o = this;
       windowHandle = GetActiveWindow();
-      SetWindowLong(windowHandle, GWL_STYLE, WS_POPUP);
-      Show(true);
+      Overlap();
       #endif
     }
 
-    public static void Show(bool isTopMost) {
+    public static void PopUp() {
       #if !UNITY_EDITOR && UNITY_STANDALONE
+      SetWindowLong(o.windowHandle, GWL_STYLE, WS_POPUP_WINDOW);
       var flags = SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVE | SWP_SHOWWINDOW;
-      setWindowPos(0, 0, 0, 0, isTopMost ? HWND_TOPMOST : HWND_NOTOPMOST, flags);
+      setWindowPos(0, 0, 0, 0, HWND_TOPMOST, flags);
+      o.isPopUp = true;
       #endif
     }
 
-    public static void Move(int x, int y) {
+    public static void Overlap() {
       #if !UNITY_EDITOR && UNITY_STANDALONE
-      POINT point;
-      if (GetCursorPos(out point)) {
-        var flags = SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVE;
-        setWindowPos((int)(point.x) - x, (int)(point.y) - y, Screen.width, Screen.height, HWND_TOPMOST, flags);
-      }
+      SetWindowLong(o.windowHandle, GWL_STYLE, WS_OVERLAPPED_WINDOW);
+      var flags = SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVE | SWP_SHOWWINDOW;
+      setWindowPos(0, 0, 0, 0, HWND_NOTOPMOST, flags);
+      o.isPopUp = false;
+      #endif
+    }
+
+    public static bool IsPopUp() {
+      #if !UNITY_EDITOR && UNITY_STANDALONE
+      return o.isPopUp;
+      #else
+      return false;
       #endif
     }
 

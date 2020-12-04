@@ -93,7 +93,9 @@ namespace penguin {
         updateTimeUI();
       }
       if (Input.GetKey(KeyCode.LeftControl)) {
-        if (Input.GetKeyDown(KeyCode.O)) {
+        if (Input.GetKeyDown(KeyCode.L)) {
+          onLock();
+        } else if (Input.GetKeyDown(KeyCode.O)) {
           onFolder();
         } else if (Input.GetKeyDown(KeyCode.P)) {
           onPlay();
@@ -103,6 +105,14 @@ namespace penguin {
       }
       if (Input.GetKeyDown(KeyCode.Space)) {
         onPauseResume();
+      }
+    }
+
+    private void onLock() {
+      if (Window.IsPopUp()) {
+        Window.Overlap();
+      } else {
+        Window.PopUp();
       }
     }
 
@@ -136,7 +146,10 @@ namespace penguin {
     private void onFolder() {
       var browser = new FolderBrowserDialog();
       browser.RootFolder = Environment.SpecialFolder.UserProfile;
-      Window.Show(false);
+      var isPopUp = Window.IsPopUp();
+      if (isPopUp) {
+        Window.Overlap();
+      }
       if (browser.ShowDialog() == System.Windows.Forms.DialogResult.OK) {
         var folderPath = File.UnifyDelimiter(browser.SelectedPath);
         config.folder = folderPath;
@@ -144,7 +157,9 @@ namespace penguin {
         textureList = texturePaths.ToList();
         saveConfig();
       }
-      Window.Show(true);
+      if (isPopUp) {
+        Window.PopUp();
+      }
     }
 
     private void onTimePicker() {
