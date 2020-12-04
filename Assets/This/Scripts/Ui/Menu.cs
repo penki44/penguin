@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
 namespace penguin {
   public class Menu : MonoBehaviour {
@@ -11,6 +12,13 @@ namespace penguin {
     public Menu child { get; set; }
     public bool open { get; private set; }
     private List<MenuItem> items;
+
+    public void Update() {
+      if (Input.GetMouseButtonDown(0) &&
+          !EventSystem.current.IsPointerOverGameObject()) {
+        Menu.root.Close();
+      }
+    }
 
     public static Menu Create(GameObject parent) {
       var menu = Instantiate(Resources.Load<Menu>("Prefabs/Menu"));

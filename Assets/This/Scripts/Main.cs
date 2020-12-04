@@ -9,7 +9,6 @@ using UnityEngine.EventSystems;
 
 namespace penguin {
   public class Main : MonoBehaviour {
-    public const int Resolution = 512;
     public static Main o;
     private bool isPlay;
     private int playCount;
@@ -21,15 +20,6 @@ namespace penguin {
     private RawImage image;
     private Config.Data config;
     private readonly string configFile = "config.txt";
-
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-    private static void OnBeforeFirstSceneLoad() {
-      UnityEngine.Application.targetFrameRate = 60;
-      UnityEngine.Screen.SetResolution(Resolution,
-                                       Resolution,
-                                       UnityEngine.Screen.fullScreen,
-                                       UnityEngine.Application.targetFrameRate);
-    }
 
     void Awake() {
       o = this;
@@ -198,8 +188,9 @@ namespace penguin {
       image.texture = texture;
       image.color = Color.white;
       image.SetNativeSize();
-      var w = (float)UnityEngine.Screen.width / texture.width;
-      var h = (float)UnityEngine.Screen.height / texture.height;
+      var canvasScaler = GameObject.FindObjectOfType<CanvasScaler>();
+      var w = canvasScaler.referenceResolution.x / texture.width;
+      var h = canvasScaler.referenceResolution.y / texture.height;
       var scale = Mathf.Min(w, h);
       image.transform.localScale = new Vector3(scale, scale, 1);
       if (textureHistory.Contains(path)) {
