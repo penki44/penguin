@@ -10,6 +10,8 @@ using UnityEngine.EventSystems;
 namespace penguin {
   public class Main : MonoBehaviour {
     public static Main o;
+    [SerializeField] private Canvas mainCanvas = default;
+    [SerializeField] private Canvas uiCanvas = default;
     private bool isPlay;
     private int playCount;
     private float playTime;
@@ -17,27 +19,29 @@ namespace penguin {
     private string[] texturePaths;
     private List<string> textureList;
     private List<string> textureHistory;
+    private CanvasScaler canvasScaler;
     private RawImage image;
     private Config.Data config;
     private readonly string configFile = "config.txt";
 
-    void Awake() {
+    private void Awake() {
       o = this;
       Sound.bgmVolume = 0.5f;
       Sound.seVolume = 0.5f;
-      var canvas = GameObject.FindObjectOfType<Canvas>();
+      canvasScaler = mainCanvas.GetComponent<CanvasScaler>();
       image = GameObject.FindObjectOfType<RawImage>();
       timeText = GameObject.FindObjectOfType<Text>();
       loadConfig();
-      Menu.root = Menu.Create(canvas.gameObject);
-      TimePicker.o = TimePicker.Create(canvas.gameObject);
+      Menu.root = Menu.Create(uiCanvas.gameObject);
+      TimePicker.o = TimePicker.Create(uiCanvas.gameObject);
     }
 
     private void OnDestroy() {
       saveConfig();
     }
 
-    void FixedUpdate() {
+
+    private void Update() {
       if (Input.GetMouseButtonDown(1)) {
         MenuItem.Config[] historyItemConfigs = null;
         if (textureHistory.Count > 0) {
@@ -48,13 +52,11 @@ namespace penguin {
             historyItemConfigs[i] = new MenuItem.Config(label, (MenuItem.Config config) => { onHistoryItem(path); });
           }
         }
-
         var settingItemConfigs = new MenuItem.Config[] {
           new MenuItem.Config("フォルダ", (MenuItem.Config config) => { onFolder(); }),
           new MenuItem.Config("ロック/解除", (MenuItem.Config config) => { onLock(); }),
           new MenuItem.Config("時間/回数", (MenuItem.Config config) => { onTimePicker(); })
         };
-
         var menuItemConfigs = new MenuItem.Config[] {
           new MenuItem.Config("開始", (MenuItem.Config config) => { onPlay(); }),
           new MenuItem.Config("停止/再開", (MenuItem.Config config) => { onPauseResume(); }),
@@ -64,7 +66,23 @@ namespace penguin {
         };
         Menu.root.Open(menuItemConfigs, Input.mousePosition);
       }
+      if (Input.GetKey(KeyCode.LeftControl)) {
+        if (Input.GetKeyDown(KeyCode.L)) {
+          onLock();
+        } else if (Input.GetKeyDown(KeyCode.O)) {
+          onFolder();
+        } else if (Input.GetKeyDown(KeyCode.P)) {
+          onPlay();
+        } else if (Input.GetKeyDown(KeyCode.Q)) {
+          onQuit();
+        }
+      }
+      if (Input.GetKeyDown(KeyCode.Space)) {
+        onPauseResume();
+      }
+    }
 
+    private void FixedUpdate() {
       if (isPlay) {
         playTime -= 1.0f / 60.0f;
         if (playTime <= 0.0f) {
@@ -82,20 +100,6 @@ namespace penguin {
           }
         }
         updateTimeUI();
-      }
-      if (Input.GetKey(KeyCode.LeftControl)) {
-        if (Input.GetKeyDown(KeyCode.L)) {
-          onLock();
-        } else if (Input.GetKeyDown(KeyCode.O)) {
-          onFolder();
-        } else if (Input.GetKeyDown(KeyCode.P)) {
-          onPlay();
-        } else if (Input.GetKeyDown(KeyCode.Q)) {
-          onQuit();
-        }
-      }
-      if (Input.GetKeyDown(KeyCode.Space)) {
-        onPauseResume();
       }
     }
 
@@ -189,7 +193,6 @@ namespace penguin {
       image.texture = texture;
       image.color = Color.white;
       image.SetNativeSize();
-      var canvasScaler = GameObject.FindObjectOfType<CanvasScaler>();
       var w = canvasScaler.referenceResolution.x / texture.width;
       var h = canvasScaler.referenceResolution.y / texture.height;
       var scale = Mathf.Min(w, h);
