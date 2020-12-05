@@ -25,6 +25,7 @@ namespace penguin {
     private readonly string configFile = "config.txt";
 
     private void Awake() {
+      UnityEngine.Application.targetFrameRate = 60;
       o = this;
       Sound.bgmVolume = 0.5f;
       Sound.seVolume = 0.5f;
@@ -84,7 +85,7 @@ namespace penguin {
 
     private void FixedUpdate() {
       if (isPlay) {
-        playTime -= 1.0f / 60.0f;
+        playTime -= Time.deltaTime;
         if (playTime <= 0.0f) {
           if (isFinish()) {
             isPlay = false;
