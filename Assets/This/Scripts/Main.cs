@@ -52,10 +52,37 @@ namespace penguin {
             historyItemConfigs[i] = new MenuItem.Config(label, (MenuItem.Config config) => { onHistoryItem(path); });
           }
         }
+        MenuItem.Config[] saveDataConfigs = null;
+        MenuItem.Config[] loadDataConfigs = null;
+        MenuItem.Config[] deleteDataConfigs = null;
+        saveDataConfigs = new MenuItem.Config[Mathf.Min(configs.Count, 10)];
+        if (configs.Count > 1) {
+          loadDataConfigs = new MenuItem.Config[configs.Count - 1];
+          deleteDataConfigs = new MenuItem.Config[configs.Count - 1];
+        }
+        for(int i = 1; i < configs.Count; i++) {
+          var n = i;
+          var data = configs[i];
+          var directory = File.GetFileName(data.folder);
+          var time = data.time;
+          var num = data.num;
+          var label = $"{directory}_{time}x{num}";
+          saveDataConfigs[i - 1] = new MenuItem.Config(label, (MenuItem.Config config) => { saveConfig(n); });
+          if (configs.Count > 1) {
+            loadDataConfigs[i - 1] = new MenuItem.Config(label, (MenuItem.Config config) => { loadConfig(n); });
+            deleteDataConfigs[i - 1] = new MenuItem.Config(label, (MenuItem.Config config) => { deleteConfig(n); });
+          }
+        }
+        if (configs.Count < 10) {
+          saveDataConfigs[configs.Count - 1] = new MenuItem.Config("new...", (MenuItem.Config config) => { saveConfig(configs.Count); });
+        }
         var settingItemConfigs = new MenuItem.Config[] {
           new MenuItem.Config("フォルダ", (MenuItem.Config config) => { onFolder(); }),
           new MenuItem.Config("ロック/解除", (MenuItem.Config config) => { onLock(); }),
-          new MenuItem.Config("時間/回数", (MenuItem.Config config) => { onTimePicker(); })
+          new MenuItem.Config("時間/回数", (MenuItem.Config config) => { onTimePicker(); }),
+          new MenuItem.Config("書き出し", null, saveDataConfigs),
+          new MenuItem.Config("読み込み", null, loadDataConfigs),
+          new MenuItem.Config("削除", null, deleteDataConfigs)
         };
         var menuItemConfigs = new MenuItem.Config[] {
           new MenuItem.Config("開始", (MenuItem.Config config) => { onPlay(); }),
@@ -210,7 +237,7 @@ namespace penguin {
     private void saveConfig(int n) {
       if (n >= configs.Count) {
         configs.Add(new Config.Data(configs[0]));
-      }else {
+      } else {
         configs[n] = new Config.Data(configs[0]);
       }
       var path = File.DataPath;
@@ -218,6 +245,10 @@ namespace penguin {
       var version = UnityEngine.Application.version;
       var text = Serializer.SerializeTextArray(version, configs.ToArray());
       File.WriteText(path, text);
+    }
+
+    private void deleteConfig(int n) {
+      configs.RemoveAt(n);
     }
 
     private void loadConfig(int n) {
