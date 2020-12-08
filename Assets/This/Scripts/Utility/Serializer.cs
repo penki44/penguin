@@ -9,26 +9,30 @@ namespace penguin {
   public static class Serializer {
     [System.Serializable]
     private class Wrapper<T> : ISerializable {
+      public string version;
       public T[] contents;
 
       public Wrapper() {
 
       }
 
-      public Wrapper(T[] contents) {
+      public Wrapper(string version, T[] contents) {
+        this.version = version;
         this.contents = contents;
       }
 
       public Wrapper(SerializationInfo info, StreamingContext context) {
+        this.version = (string)info.GetValue("version", typeof(string));
         this.contents = (T[])info.GetValue("contents", typeof(T[]));
       }
 
       public void GetObjectData(SerializationInfo info, StreamingContext context) {
+        info.AddValue("version", this.version);
         info.AddValue("contents", this.contents);
       }
     }
 
-    public static byte[] SerializeBinary<T>(T obj) {
+    private static byte[] serializeBinary<T>(T obj) {
       byte[] data = null;
       if (obj != null) {
         using (var stream = new MemoryStream()) {
@@ -40,14 +44,18 @@ namespace penguin {
       return data;
     }
 
-    public static byte[] SerializeBinaryArray<T>(T[] objs) {
+    public static byte[] SerializeBinary<T>(string version, T obj) {
+      return SerializeBinaryArray(version, new T[] { obj });
+    }
+
+    public static byte[] SerializeBinaryArray<T>(string version, T[] objs) {
       if (objs?.Length > 0) {
-        return SerializeBinary(new Wrapper<T>(objs));
+        return serializeBinary(new Wrapper<T>(version, objs));
       }
       return null;
     }
 
-    public static T DeserializeBinary<T>(byte[] data) {
+    public static T deserializeBinary<T>(byte[] data) {
       T obj = default;
       if (data?.Length > 0) {
         using (var stream = new MemoryStream(data)) {
@@ -58,11 +66,17 @@ namespace penguin {
       return obj;
     }
 
-    public static T[] DeserializeBinaryArray<T>(byte[] data) {
+    public static (string version, T obj) DeserializeBinary<T>(byte[] data) {
+      var (version, objs) = DeserializeBinaryArray<T>(data);
+      return (version, objs[0]);
+    }
+
+    public static (string version, T[] objs) DeserializeBinaryArray<T>(byte[] data) {
       if (data?.Length > 0) {
-        return DeserializeBinary<Wrapper<T>>(data).contents;
+        var wrapper = deserializeBinary<Wrapper<T>>(data);
+        return (wrapper.version, wrapper.contents);
       }
-      return null;
+      return default;
     }
 
     public static string SerializeText<T>(T obj) {
@@ -72,9 +86,13 @@ namespace penguin {
       return string.Empty;
     }
 
-    public static string SerializeTextArray<T>(T[] objs) {
+    public static string SerializeTextSingle<T>(string version, T obj) {
+      return SerializeTextArray(version, new T[] { obj });
+    }
+
+    public static string SerializeTextArray<T>(string version, T[] objs) {
       if (objs?.Length > 0) {
-        return JsonUtility.ToJson(new Wrapper<T>(objs));
+        return SerializeText(new Wrapper<T>(version, objs));
       }
       return string.Empty;
     }
@@ -87,12 +105,17 @@ namespace penguin {
       return obj;
     }
 
-    public static T[] DeserializeTextArray<T>(string data) {
-      T[] objs = default;
+    public static (string version, T obj) DeserializeTextSingle<T>(string data) {
+      var (version, objs) = DeserializeTextArray<T>(data);
+      return (version, objs[0]);
+    }
+
+    public static (string version, T[] objs) DeserializeTextArray<T>(string data) {
       if (data?.Length > 0) {
-        objs = JsonUtility.FromJson<Wrapper<T>>(data).contents;
+        var wrapper = DeserializeText<Wrapper<T>>(data);
+        return (wrapper.version, wrapper.contents);
       }
-      return objs;
+      return default;
     }
   }
 }

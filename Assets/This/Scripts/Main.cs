@@ -21,7 +21,7 @@ namespace penguin {
     private List<string> textureHistory;
     private CanvasScaler canvasScaler;
     private RawImage image;
-    private Config.Data config;
+    private List<Config.Data> configs;
     private readonly string configFile = "config.txt";
 
     private void Awake() {
@@ -32,15 +32,14 @@ namespace penguin {
       canvasScaler = mainCanvas.GetComponent<CanvasScaler>();
       image = GameObject.FindObjectOfType<RawImage>();
       timeText = GameObject.FindObjectOfType<Text>();
-      loadConfig();
+      loadConfig(0);
       Menu.root = Menu.Create(uiCanvas.gameObject);
       TimePicker.o = TimePicker.Create(uiCanvas.gameObject);
     }
 
     private void OnDestroy() {
-      saveConfig();
+      saveConfig(0);
     }
-
 
     private void Update() {
       if (Input.GetMouseButtonDown(1)) {
@@ -95,7 +94,7 @@ namespace penguin {
             clearImage();
           } else {
             playCount++;
-            playTime = config.time;
+            playTime = configs[0].time;
             Sound.PlaySe("Se/next");
             setNextImage();
           }
@@ -148,10 +147,10 @@ namespace penguin {
       }
       if (browser.ShowDialog() == System.Windows.Forms.DialogResult.OK) {
         var folderPath = File.UnifyDelimiter(browser.SelectedPath);
-        config.folder = folderPath;
+        configs[0].folder = folderPath;
         texturePaths = getTexturePaths(folderPath);
         textureList = texturePaths.ToList();
-        saveConfig();
+        saveConfig(0);
       }
       if (isPopUp) {
         Window.PopUp();
@@ -159,7 +158,7 @@ namespace penguin {
     }
 
     private void onTimePicker() {
-      TimePicker.o.Open(config.time, config.num);
+      TimePicker.o.Open(configs[0].time, configs[0].num);
     }
 
     private string[] getTexturePaths(string folderPath) {
@@ -173,7 +172,7 @@ namespace penguin {
     }
 
     private bool isFinish() {
-      return textureList.Count <= 0 || playCount >= config.num;
+      return textureList.Count <= 0 || playCount >= configs[0].num;
     }
 
     private void clearImage() {
@@ -205,44 +204,61 @@ namespace penguin {
         textureHistory.RemoveAt(0);
       }
       textureHistory.Add(path);
-      config.history = textureHistory.ToArray();
+      configs[0].history = textureHistory.ToArray();
     }
 
-    private void saveConfig() {
+    private void saveConfig(int n) {
+      if (n >= configs.Count) {
+        configs.Add(new Config.Data(configs[0]));
+      }else {
+        configs[n] = new Config.Data(configs[0]);
+      }
       var path = File.DataPath;
       path = File.CombinePath(path, configFile);
-      var text = Serializer.SerializeText(config);
+      var version = UnityEngine.Application.version;
+      var text = Serializer.SerializeTextArray(version, configs.ToArray());
       File.WriteText(path, text);
     }
 
-    private void loadConfig() {
-      texturePaths = new string[] {};
-      textureList = new List<string>();
-      textureHistory = new List<string>();
-      var path = File.DataPath;
-      path = File.CombinePath(path, configFile);
-      if (File.IsExistsFile(path)) {
-        var text = File.ReadText(path);
-        config = Serializer.DeserializeText<Config.Data>(text);
-        if (File.IsExistsDirectory(config.folder)) {
-          texturePaths = getTexturePaths(config.folder);
-          textureList = texturePaths.ToList();
-        }
-        foreach(var historyPath in config.history) {
-          if (File.IsExistsFile(historyPath)) {
-            textureHistory.Add(historyPath);
+    private void loadConfig(int n) {
+      string version;
+      Config.Data[] datas;
+      if (configs == null) {
+        texturePaths = new string[] {};
+        textureList = new List<string>();
+        textureHistory = new List<string>();
+        var path = File.DataPath;
+        path = File.CombinePath(path, configFile);
+        if (File.IsExistsFile(path)) {
+          var text = File.ReadText(path);
+          (version, datas) = Serializer.DeserializeTextArray<Config.Data>(text);
+          if (version == default /* for version 1.0.3 or earlier */) {
+            datas = new Config.Data[] { Serializer.DeserializeText<Config.Data>(text) };
           }
+          configs = datas.ToList();
+        } else {
+          var assets = Resources.Load<TextAsset>("Levels/ConfigTable");
+          (version, datas) = Serializer.DeserializeTextArray<Config.Data>(assets.text);
+          configs = datas.ToList();
         }
-      } else {
-        var assets = Resources.Load<TextAsset>("Levels/ConfigTable");
-        config = Serializer.DeserializeTextArray<Config.Data>(assets.text)[0];
       }
+      var config = configs[n];
+      if (File.IsExistsDirectory(config.folder)) {
+        texturePaths = getTexturePaths(config.folder);
+        textureList = texturePaths.ToList();
+      }
+      foreach(var historyPath in config.history) {
+        if (File.IsExistsFile(historyPath)) {
+          textureHistory.Add(historyPath);
+        }
+      }
+      configs[0] = new Config.Data(config);
     }
 
     public static void ApplyTimeConfig(int time, int num) {
-      o.config.time = time;
-      o.config.num = num;
-      o.saveConfig();
+      o.configs[0].time = time;
+      o.configs[0].num = num;
+      o.saveConfig(0);
     }
   }
 }
