@@ -73,16 +73,16 @@ namespace penguin {
             deleteDataConfigs[i - 1] = new MenuItem.Config(label, (MenuItem.Config config) => { deleteConfig(n); });
           }
         }
-        if (configs.Count < 10) {
+        if (configs.Count <= 10) {
           saveDataConfigs[configs.Count - 1] = new MenuItem.Config("new...", (MenuItem.Config config) => { saveConfig(configs.Count); });
         }
         var settingItemConfigs = new MenuItem.Config[] {
-          new MenuItem.Config("フォルダ", (MenuItem.Config config) => { onFolder(); }),
-          new MenuItem.Config("ロック/解除", (MenuItem.Config config) => { onLock(); }),
-          new MenuItem.Config("時間/回数", (MenuItem.Config config) => { onTimePicker(); }),
-          new MenuItem.Config("書き出し", null, saveDataConfigs),
           new MenuItem.Config("読み込み", null, loadDataConfigs),
-          new MenuItem.Config("削除", null, deleteDataConfigs)
+          new MenuItem.Config("書き出し", null, saveDataConfigs),
+          new MenuItem.Config("削除", null, deleteDataConfigs),
+          new MenuItem.Config("フォルダ", (MenuItem.Config config) => { onFolder(); }),
+          new MenuItem.Config("時間/回数", (MenuItem.Config config) => { onTimePicker(); }),
+          new MenuItem.Config("ロック/解除", (MenuItem.Config config) => { onLock(); })
         };
         var menuItemConfigs = new MenuItem.Config[] {
           new MenuItem.Config("開始", (MenuItem.Config config) => { onPlay(); }),
