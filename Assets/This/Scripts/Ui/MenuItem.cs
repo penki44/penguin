@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -30,6 +31,7 @@ namespace penguin {
     public float height { get { return rect.sizeDelta.y; } }
     private Config config;
     private Menu menu;
+    private const float delay = 0.25f;
 
     public void Initialize(Config config, Menu menu) {
       this.config = config;
@@ -39,6 +41,7 @@ namespace penguin {
 
     public void OnPointerClick(PointerEventData pointerEventData) {
       if (pointerEventData.pointerId == -1) {
+        revoke();
         if (config.action != null) {
           config.action(config);
           Menu.root.Close();
@@ -48,18 +51,36 @@ namespace penguin {
 
     public void OnPointerEnter(PointerEventData pointerEventData) {
       if (config.sub != null) {
-        if (menu.child != null && menu.child.open) {
-          menu.child.Close();
-        }
-        menu.child = Menu.Create(gameObject);
-        menu.child.Open(config.sub, transform.position);
+        revoke();
+        invoke(delay, () => {
+          if (menu.child != null && menu.child.open) {
+            menu.child.Close();
+          }
+          menu.child = Menu.Create(gameObject);
+          menu.child.Open(config.sub, transform.position);
+        });
       }
     }
 
     public void OnPointerExit(PointerEventData pointerEventData) {
-      if (menu.child != null && menu.child.open) {
-        menu.child.Close();
+      revoke();
+      invoke(delay, () => {
+        if (menu.child != null && menu.child.open) {
+          menu.child.Close();
+        }
+      });
+    }
+
+    private void invoke(float delay, Action action) {
+      IEnumerator f() {
+        yield return new WaitForSeconds(delay);
+        action();
       }
+      StartCoroutine(f());
+    }
+
+    private void revoke() {
+      StopAllCoroutines();
     }
   }
 }
