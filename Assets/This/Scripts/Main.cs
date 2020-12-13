@@ -38,6 +38,9 @@ namespace penguin {
     }
 
     private void OnDestroy() {
+      if (Window.IsPopUp()) {
+        Window.Overlap();
+      }
       saveConfig(0);
     }
 
